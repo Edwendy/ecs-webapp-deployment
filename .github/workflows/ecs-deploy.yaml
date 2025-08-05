@@ -54,6 +54,19 @@ jobs:
       id: image
       run: echo "uri=$(cat image-uri.txt)" >> $GITHUB_OUTPUT
       
+    - name: Set up AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Log in to Amazon ECR
+      uses: aws-actions/amazon-ecr-login@v2
+      
+    - name: Pull Docker image for scanning
+      run: docker pull ${{ steps.image.outputs.uri }}
+      
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
       with:
