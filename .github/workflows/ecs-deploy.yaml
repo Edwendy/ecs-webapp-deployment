@@ -46,6 +46,7 @@ jobs:
     permissions:
       security-events: write
       contents: read
+      actions: read
     
     steps:
     - name: Download image URI
@@ -81,6 +82,7 @@ jobs:
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: 'trivy-results.sarif'
+      continue-on-error: true
 
   deploy:
     needs: [build, security]
