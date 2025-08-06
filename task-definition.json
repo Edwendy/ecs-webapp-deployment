@@ -4,7 +4,8 @@
         {
             "name": "barista-cafe-app-container",
             "image": "897729115822.dkr.ecr.us-east-2.amazonaws.com/barista-cafe-app-repo:latest",
-            "cpu": 0,
+            "cpu": 128,
+            "memory": 256,
             "portMappings": [
                 {
                     "name": "barista-cafe-app-container-80-tcp",
@@ -69,8 +70,8 @@
     "requiresCompatibilities": [
         "EC2"
     ],
-    "cpu": "1024",
-    "memory": "3072",
+    "cpu": "128",
+    "memory": "256",
     "runtimePlatform": {
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"
