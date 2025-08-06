@@ -1,14 +1,13 @@
 {
-    
+    "taskDefinitionArn": "arn:aws:ecs:us-east-2:897729115822:task-definition/barista-cafe-app-task-definition:1",
     "containerDefinitions": [
         {
-            "name": "barista-cafeapp-container",
-            "image": "897729115822.dkr.ecr.us-east-2.amazonaws.com/barista-cafeapp-repo:latest",
-            "cpu": 256,
-            "memory": 512,
+            "name": "barista-cafe-app-container",
+            "image": "897729115822.dkr.ecr.us-east-2.amazonaws.com/barista-cafe-app-repo:latest",
+            "cpu": 0,
             "portMappings": [
                 {
-                    "name": "barista-cafeapp-container-80-tcp",
+                    "name": "barista-cafe-app-container-80-tcp",
                     "containerPort": 80,
                     "hostPort": 0,
                     "protocol": "tcp",
@@ -24,7 +23,7 @@
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
-                    "awslogs-group": "/ecs/barista-cafeapp-task-definition",
+                    "awslogs-group": "/ecs/barista-cafe-app-task-definition",
                     "awslogs-create-group": "true",
                     "awslogs-region": "us-east-2",
                     "awslogs-stream-prefix": "ecs"
@@ -32,17 +31,37 @@
                 "secretOptions": []
             },
             "systemControls": []
-
         }
     ],
-    "family": "barista-cafeapp-task-definition",
+    "family": "barista-cafe-app-task-definition",
     "executionRoleArn": "arn:aws:iam::897729115822:role/ecsTaskExecutionRole",
     "networkMode": "bridge",
     "revision": 1,
     "volumes": [],
     "status": "ACTIVE",
-  
-
+    "requiresAttributes": [
+        {
+            "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+        },
+        {
+            "name": "ecs.capability.execution-role-awslogs"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.ecr-auth"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+        },
+        {
+            "name": "ecs.capability.execution-role-ecr-pull"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
+        }
+    ],
     "placementConstraints": [],
     "compatibilities": [
         "EC2"
@@ -50,14 +69,14 @@
     "requiresCompatibilities": [
         "EC2"
     ],
-    "cpu": "256",
-    "memory": "512",
+    "cpu": "1024",
+    "memory": "3072",
     "runtimePlatform": {
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"
     },
-   
-   
+    "registeredAt": "2025-08-06T13:46:00.113Z",
+    "registeredBy": "arn:aws:iam::897729115822:user/wendy",
     "enableFaultInjection": false,
     "tags": []
 }
