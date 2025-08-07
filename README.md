@@ -27,7 +27,7 @@ A modern DevOps implementation for deploying a static cafe website using AWS ECS
                                 ▼                        │
                        ┌──────────────────┐              │
                        │   ECS Cluster    │◀─────────────┘
-                       │   (EC2 Launch)   │
+                       │ (EC2 / Fargate)  │
                        └──────────────────┘
 ```
 
@@ -47,7 +47,7 @@ A modern DevOps implementation for deploying a static cafe website using AWS ECS
 - **Secrets management** via GitHub Secrets
 
 ### Infrastructure
-- **AWS ECS** with EC2 launch type
+- **AWS ECS** with EC2 and Fargate launch types
 - **Amazon ECR** for container registry
 - **CloudWatch Logs** for centralized logging
 - **Resource optimization** (128 CPU, 256MB memory)
@@ -55,11 +55,12 @@ A modern DevOps implementation for deploying a static cafe website using AWS ECS
 ## 📋 Prerequisites
 
 ### AWS Resources
-- ECS Cluster (EC2 launch type)
+- ECS Cluster (EC2 or Fargate launch type)
 - ECR Repository
 - ECS Service
 - IAM Role with ECS/ECR permissions
-- EC2 instances with ECS agent
+- EC2 instances with ECS agent (for EC2 launch type)
+- VPC with subnets (for Fargate launch type)
 
 ### GitHub Secrets
 ```bash
@@ -146,7 +147,7 @@ git push origin main
 
 ## 📊 Resource Configuration
 
-### Task Definition
+### EC2 Launch Type
 ```json
 {
   "cpu": "128",
@@ -156,9 +157,20 @@ git push origin main
 }
 ```
 
+### Fargate Launch Type
+```json
+{
+  "cpu": "256",
+  "memory": "512",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "executionRoleArn": "arn:aws:iam::ACCOUNT:role/ecsTaskExecutionRole"
+}
+```
+
 ### Container Specs
-- **CPU**: 128 units (0.125 vCPU)
-- **Memory**: 256 MB
+- **CPU**: 128-256 units (0.125-0.25 vCPU)
+- **Memory**: 256-512 MB
 - **Port**: 80 (HTTP)
 - **Base Image**: nginx:alpine
 
@@ -173,10 +185,12 @@ git push origin main
 ### Common Issues
 | Issue | Solution |
 |-------|----------|
-| Task placement failure | Check EC2 instance capacity |
+| Task placement failure (EC2) | Check EC2 instance capacity |
+| Task placement failure (Fargate) | Verify subnet configuration and availability |
 | Image pull errors | Verify ECR permissions |
 | Service instability | Review task definition resources |
 | Pipeline failures | Check GitHub Secrets configuration |
+| Fargate networking issues | Ensure VPC, subnets, and security groups are configured |
 
 ## 🔐 Security Best Practices
 
