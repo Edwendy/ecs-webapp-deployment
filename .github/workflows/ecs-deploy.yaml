@@ -6,7 +6,7 @@ on:
       - main
     paths-ignore:
       - 'docs/**'
-      - 'readme.md'
+      - 'README.md'
 
 jobs:
   build:
