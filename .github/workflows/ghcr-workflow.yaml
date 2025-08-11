@@ -5,7 +5,7 @@ on:
 
 env:
     CONTAINER_REGISTRY: ghcr.io
-    IMAGE_NAME: test-app
+    IMAGE_NAME: barista-cafe-app
     Github_Username: edwendy
 
 permissions:
