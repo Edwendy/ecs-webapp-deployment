@@ -56,13 +56,14 @@ jobs:
         docker push $IMAGE_URI
         echo "image-uri=$IMAGE_URI" >> $GITHUB_OUTPUT
         
+    - name: Create image URI file
+      run: echo "${{ steps.build-image.outputs.image-uri }}" > image-uri.txt
+      
     - name: Upload image URI
       uses: actions/upload-artifact@v4
       with:
         name: image-uri
-        path: |
-          echo "${{ steps.build-image.outputs.image-uri }}" > image-uri.txt
-          cat image-uri.txt
+        path: image-uri.txt
 
   security:
     needs: build
