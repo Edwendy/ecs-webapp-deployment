@@ -10,6 +10,10 @@ on:
 
 jobs:
   deploy:
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
     uses: ./.github/workflows/ecs-deploy-reusable.yaml
     with:
       aws-region: ${{ vars.AWS_REGION || 'us-east-2' }}
