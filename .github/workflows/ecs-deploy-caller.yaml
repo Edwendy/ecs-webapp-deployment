@@ -10,7 +10,7 @@ on:
 
 jobs:
   deploy:
-    uses: ./.github/workflows/ghcr-workflow.yaml
+    uses: ./.github/workflows/ecs-deploy-resusable.yaml
     with:
       aws-region: ${{ vars.AWS_REGION || 'us-east-2' }}
       ecr-repository-uri: ${{ vars.ECR_REPOSITORY_URI }}
