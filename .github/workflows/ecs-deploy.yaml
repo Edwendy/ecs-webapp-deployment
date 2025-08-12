@@ -1,4 +1,4 @@
-name: Build and Deploy to ECS
+name: Deploy to ECS
 
 on:
   push:
@@ -9,118 +9,15 @@ on:
       - 'README.md'
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
-
-    - name: Set up AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_REGION }}
-
-    - name: Log in to Amazon ECR
-      uses: aws-actions/amazon-ecr-login@v2
-
-    - name: Build and Push Docker image
-      id: build-image
-      run: |
-        IMAGE_URI=${{ secrets.ECR_REPOSITORY_URI }}:${{ github.sha }}
-        docker build -t $IMAGE_URI .
-        docker push $IMAGE_URI
-        echo "$IMAGE_URI" > image-uri.txt
-        
-    - name: Upload image URI
-      uses: actions/upload-artifact@v4
-      with:
-        name: image-uri
-        path: image-uri.txt
-
-  security:
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      contents: read
-      actions: read
-    
-    steps:
-    - name: Download image URI
-      uses: actions/download-artifact@v4
-      with:
-        name: image-uri
-        
-    - name: Set image URI
-      id: image
-      run: echo "uri=$(cat image-uri.txt)" >> $GITHUB_OUTPUT
-      
-    - name: Set up AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_REGION }}
-
-    - name: Log in to Amazon ECR
-      uses: aws-actions/amazon-ecr-login@v2
-      
-    - name: Pull Docker image for scanning
-      run: docker pull ${{ steps.image.outputs.uri }}
-      
-    - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: ${{ steps.image.outputs.uri }}
-        format: 'sarif'
-        output: 'trivy-results.sarif'
-        
-    - name: Upload Trivy scan results
-      uses: github/codeql-action/upload-sarif@v3
-      with:
-        sarif_file: 'trivy-results.sarif'
-      continue-on-error: true
-
   deploy:
-    needs: [build, security]
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
-      
-    - name: Download image URI
-      uses: actions/download-artifact@v4
-      with:
-        name: image-uri
-        
-    - name: Set image URI
-      id: image
-      run: echo "uri=$(cat image-uri.txt)" >> $GITHUB_OUTPUT
-
-    - name: Set up AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_REGION }}
-
-    - name: Fill in the new image ID in the Amazon ECS task definition
-      id: task-def
-      uses: aws-actions/amazon-ecs-render-task-definition@v1
-      with:
-        task-definition: ./task-definition.json
-        container-name: ${{ secrets.CONTAINER_NAME }}
-        image: ${{ steps.image.outputs.uri }}
-
-    - name: Deploy Amazon ECS task definition
-      uses: aws-actions/amazon-ecs-deploy-task-definition@v2
-      with:
-        task-definition: ${{ steps.task-def.outputs.task-definition }}
-        service: ${{ secrets.ECS_SERVICE }}
-        cluster: ${{ secrets.ECS_CLUSTER }}
-        wait-for-service-stability: true
-##
+    uses: ./.github/workflows/ghcr-workflow.yaml
+    with:
+      aws-region: ${{ vars.AWS_REGION || 'us-east-2' }}
+      ecr-repository-uri: ${{ vars.ECR_REPOSITORY_URI }}
+      container-name: ${{ vars.CONTAINER_NAME }}
+      ecs-service: ${{ vars.ECS_SERVICE }}
+      ecs-cluster: ${{ vars.ECS_CLUSTER }}
+      task-definition-path: './task-definition.json'
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

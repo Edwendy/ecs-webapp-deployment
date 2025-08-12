@@ -1,13 +1,13 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:us-east-2:897729115822:task-definition/barista-app-task-definition:1",
+    "taskDefinitionArn": "arn:aws:ecs:us-east-2:897729115822:task-definition/ghcr-task-definition:1",
     "containerDefinitions": [
         {
-            "name": "barista-app",
-            "image": "897729115822.dkr.ecr.us-east-2.amazonaws.com/barista-app-repo:latest",
+            "name": "ghcr-container",
+            "image": "897729115822.dkr.ecr.us-east-2.amazonaws.com/ghcr-repo:latest",
             "cpu": 0,
             "portMappings": [
                 {
-                    "name": "barista-app-80-tcp",
+                    "name": "ghcr-container-80-tcp",
                     "containerPort": 80,
                     "hostPort": 80,
                     "protocol": "tcp",
@@ -23,7 +23,7 @@
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
-                    "awslogs-group": "/ecs/barista-app-task-definition",
+                    "awslogs-group": "/ecs/ghcr-task-definition",
                     "awslogs-create-group": "true",
                     "awslogs-region": "us-east-2",
                     "awslogs-stream-prefix": "ecs"
@@ -33,7 +33,7 @@
             "systemControls": []
         }
     ],
-    "family": "barista-app-task-definition",
+    "family": "ghcr-task-definition",
     "executionRoleArn": "arn:aws:iam::897729115822:role/ecsTaskExecutionRole",
     "networkMode": "awsvpc",
     "revision": 1,
@@ -79,7 +79,7 @@
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2025-08-07T15:03:52.333Z",
+    "registeredAt": "2025-08-12T13:58:27.307Z",
     "registeredBy": "arn:aws:iam::897729115822:user/wendy",
     "enableFaultInjection": false,
     "tags": []

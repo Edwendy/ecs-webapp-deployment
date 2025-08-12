@@ -1,35 +1,140 @@
-name: GHCR Workflow
+name: Reusable ECS Deployment Workflow
 
 on:
-  - push
+  workflow_call:
+    inputs:
+      aws-region:
+        required: true
+        type: string
+      ecr-repository-uri:
+        required: true
+        type: string
+      container-name:
+        required: true
+        type: string
+      ecs-service:
+        required: true
+        type: string
+      ecs-cluster:
+        required: true
+        type: string
+      task-definition-path:
+        required: false
+        type: string
+        default: './task-definition.json'
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
 
-env:
-    CONTAINER_REGISTRY: ghcr.io
-    IMAGE_NAME: barista-cafe-app
-    Github_Username: edwendy
-
-permissions:
-    id-token: write
-    contents: write
-    packages: write
-
-jobs: 
-  docker_build: 
+jobs:
+  build:
     runs-on: ubuntu-latest
+    outputs:
+      image-uri: ${{ steps.build-image.outputs.image-uri }}
+    
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-# Pushing to GitHub Container Registry (GHCR)
-    - name: GHCR Login
-      uses: docker/login-action@v2.2.0
+    - name: Set up AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
       with:
-        registry: ${{ env.CONTAINER_REGISTRY }}
-        username: ${{ github.actor }}  
-        password: ${{ secrets.GITHUB_TOKEN }}  
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ inputs.aws-region }}
 
-    - name: Publish code to GHCR
+    - name: Log in to Amazon ECR
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build and Push Docker image
+      id: build-image
       run: |
-        docker build -t ${{ env.CONTAINER_REGISTRY }}/${{ env.Github_Username }}/${{ env.IMAGE_NAME }}:latest .  
-        docker push ${{ env.CONTAINER_REGISTRY }}/${{ env.Github_Username }}/${{ env.IMAGE_NAME }}:latest 
+        IMAGE_URI=${{ inputs.ecr-repository-uri }}:${{ github.sha }}
+        docker build -t $IMAGE_URI .
+        docker push $IMAGE_URI
+        echo "image-uri=$IMAGE_URI" >> $GITHUB_OUTPUT
         
+    - name: Upload image URI
+      uses: actions/upload-artifact@v4
+      with:
+        name: image-uri
+        path: |
+          echo "${{ steps.build-image.outputs.image-uri }}" > image-uri.txt
+          cat image-uri.txt
+
+  security:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
+    
+    steps:
+    - name: Download image URI
+      uses: actions/download-artifact@v4
+      with:
+        name: image-uri
+        
+    - name: Set image URI
+      id: image
+      run: echo "uri=${{ needs.build.outputs.image-uri }}" >> $GITHUB_OUTPUT
+      
+    - name: Set up AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ inputs.aws-region }}
+
+    - name: Log in to Amazon ECR
+      uses: aws-actions/amazon-ecr-login@v2
+      
+    - name: Pull Docker image for scanning
+      run: docker pull ${{ steps.image.outputs.uri }}
+      
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ steps.image.outputs.uri }}
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: 'trivy-results.sarif'
+      continue-on-error: true
+
+  deploy:
+    needs: [build, security]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ inputs.aws-region }}
+
+    - name: Fill in the new image ID in the Amazon ECS task definition
+      id: task-def
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: ${{ inputs.task-definition-path }}
+        container-name: ${{ inputs.container-name }}
+        image: ${{ needs.build.outputs.image-uri }}
+
+    - name: Deploy Amazon ECS task definition
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+      with:
+        task-definition: ${{ steps.task-def.outputs.task-definition }}
+        service: ${{ inputs.ecs-service }}
+        cluster: ${{ inputs.ecs-cluster }}
+        wait-for-service-stability: true

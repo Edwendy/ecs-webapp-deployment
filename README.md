@@ -49,6 +49,7 @@ A modern DevOps implementation for deploying a static cafe website using AWS ECS
 ### Infrastructure
 - **AWS ECS** with EC2 and Fargate launch types
 - **Amazon ECR** for container registry
+- **GitHub Container Registry** for public container images
 - **CloudWatch Logs** for centralized logging
 - **Resource optimization** (128 CPU, 256MB memory)
 
@@ -88,31 +89,16 @@ ECS_CLUSTER            # ECS cluster name
 
 ## 🔄 CI/CD Pipeline
 
-### 1. Build Stage
-```yaml
-- Checkout source code
-- Configure AWS credentials
-- Build Docker image
-- Push to ECR with commit SHA tag
-- Upload image URI as artifact
-```
+### ECS Deployment Pipeline
+1. **Build Stage**: Build and push to ECR with commit SHA tag
+2. **Security Stage**: Trivy vulnerability scanning
+3. **Deploy Stage**: Deploy to ECS service
 
-### 2. Security Stage
-```yaml
-- Download image URI artifact
-- Authenticate to ECR
-- Pull Docker image
-- Run Trivy vulnerability scan
-- Upload SARIF results to GitHub Security
-```
-
-### 3. Deploy Stage
-```yaml
-- Download image URI artifact
-- Update ECS task definition
-- Deploy to ECS service
-- Wait for service stability
-```
+### GHCR Pipeline
+1. **Build Stage**: Build and push to GitHub Container Registry
+2. **Tagging**: Multiple tags (branch, SHA, latest)
+3. **Security Stage**: Trivy vulnerability scanning
+4. **Metadata**: Extract and apply Docker labels
 
 ## 📁 Project Structure
 
@@ -120,7 +106,9 @@ ECS_CLUSTER            # ECS cluster name
 ecs-webapp-deployment/
 ├── .github/
 │   └── workflows/
-│       └── ecs-deploy.yaml      # CI/CD pipeline
+│       ├── ecs-deploy.yaml      # ECS deployment caller
+│       ├── ghcr-workflow.yaml   # Reusable ECS workflow
+│       └── ghcr-push.yaml       # GHCR push workflow
 ├── css/                         # Stylesheets
 ├── js/                          # JavaScript files
 ├── images/                      # Static assets
