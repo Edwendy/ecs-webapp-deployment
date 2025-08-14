@@ -152,80 +152,26 @@ jobs:
     - name: Slack Notification
       uses: 8398a7/action-slack@v3
       with:
-        status: custom
-        custom_payload: |
-          {
-            "channel": "#deployments",
-            "username": "ECS Deploy Bot",
-            "icon_emoji": ":rocket:",
-            "attachments": [
-              {
-                "color": "${{ steps.status.outputs.color }}",
-                "title": "ECS Deployment ${{ steps.status.outputs.status }}",
-                "title_link": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-                "fields": [
-                  {
-                    "title": "Repository",
-                    "value": "${{ github.repository }}",
-                    "short": true
-                  },
-                  {
-                    "title": "Branch",
-                    "value": "${{ github.ref_name }}",
-                    "short": true
-                  },
-                  {
-                    "title": "Commit",
-                    "value": "<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>",
-                    "short": true
-                  },
-                  {
-                    "title": "Triggered by",
-                    "value": "${{ github.actor }}",
-                    "short": true
-                  },
-                  {
-                    "title": "Build Status",
-                    "value": "${{ needs.build.result == 'success' && '✅' || '❌' }} ${{ needs.build.result }}",
-                    "short": true
-                  },
-                  {
-                    "title": "Security Scan",
-                    "value": "${{ needs.security.result == 'success' && '✅' || '❌' }} ${{ needs.security.result }}",
-                    "short": true
-                  },
-                  {
-                    "title": "Deployment",
-                    "value": "${{ needs.deploy.result == 'success' && '✅' || '❌' }} ${{ needs.deploy.result }}",
-                    "short": true
-                  },
-                  {
-                    "title": "ECS Service",
-                    "value": "${{ vars.ECS_SERVICE }}",
-                    "short": true
-                  },
-                  {
-                    "title": "ECS Cluster",
-                    "value": "${{ vars.ECS_CLUSTER }}",
-                    "short": true
-                  },
-                  {
-                    "title": "AWS Region",
-                    "value": "${{ vars.AWS_REGION || 'us-east-2' }}",
-                    "short": true
-                  },
-                  {
-                    "title": "Docker Image",
-                    "value": "${{ needs.build.outputs.image-uri }}",
-                    "short": false
-                  }
-                ],
-                "footer": "GitHub Actions",
-                "footer_icon": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
-                "ts": ${{ github.event.head_commit.timestamp || github.run_id }}
-              }
-            ]
-          }
+        status: ${{ steps.status.outputs.status == '✅ SUCCESS' && 'success' || steps.status.outputs.status == '❌ FAILURE' && 'failure' || 'cancelled' }}
+        channel: '#deployments'
+        username: 'ECS Deploy Bot'
+        icon_emoji: ':rocket:'
+        color: ${{ steps.status.outputs.color }}
+        title: 'ECS Deployment ${{ steps.status.outputs.status }}'
+        text: |
+          *Repository:* ${{ github.repository }}
+          *Branch:* ${{ github.ref_name }}
+          *Commit:* <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>
+          *Triggered by:* ${{ github.actor }}
+          
+          *Build:* ${{ needs.build.result == 'success' && '✅' || '❌' }} ${{ needs.build.result }}
+          *Security:* ${{ needs.security.result == 'success' && '✅' || '❌' }} ${{ needs.security.result }}
+          *Deploy:* ${{ needs.deploy.result == 'success' && '✅' || '❌' }} ${{ needs.deploy.result }}
+          
+          *Service:* ${{ vars.ECS_SERVICE }}
+          *Cluster:* ${{ vars.ECS_CLUSTER }}
+          *Region:* ${{ vars.AWS_REGION || 'us-east-2' }}
+          *Image:* ${{ needs.build.outputs.image-uri }}
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       if: env.SLACK_WEBHOOK_URL != ''
