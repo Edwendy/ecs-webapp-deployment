@@ -135,13 +135,18 @@ jobs:
           echo "Slack webhook URL is not set"
         fi
         
-    - name: Set deployment status
+    - name: Set deployment status and color
       id: status
       run: |
         if [[ "${{ needs.build.result }}" == "success" && "${{ needs.security.result }}" == "success" && "${{ needs.deploy.result }}" == "success" ]]; then
-          echo "status=SUCCESS" >> $GITHUB_OUTPUT
+          echo "status=✅ SUCCESS" >> $GITHUB_OUTPUT
+          echo "color=#36a64f" >> $GITHUB_OUTPUT
+        elif [[ "${{ needs.build.result }}" == "failure" || "${{ needs.security.result }}" == "failure" || "${{ needs.deploy.result }}" == "failure" ]]; then
+          echo "status=❌ FAILURE" >> $GITHUB_OUTPUT
+          echo "color=#ff0000" >> $GITHUB_OUTPUT
         else
-          echo "status=FAILURE" >> $GITHUB_OUTPUT
+          echo "status=⏳ PENDING" >> $GITHUB_OUTPUT
+          echo "color=#ffff00" >> $GITHUB_OUTPUT
         fi
         
     - name: Slack Notification
@@ -151,28 +156,73 @@ jobs:
         custom_payload: |
           {
             "channel": "#deployments",
-            "text": "ECS Deployment ${{ steps.status.outputs.status }}",
-            "color": "${{ steps.status.outputs.status == 'SUCCESS' && 'good' || 'danger' }}",
-            "fields": [
+            "username": "ECS Deploy Bot",
+            "icon_emoji": ":rocket:",
+            "attachments": [
               {
-                "title": "Repository",
-                "value": "${{ github.repository }}",
-                "short": true
-              },
-              {
-                "title": "Branch",
-                "value": "${{ github.ref_name }}",
-                "short": true
-              },
-              {
-                "title": "Status",
-                "value": "${{ steps.status.outputs.status }}",
-                "short": true
-              },
-              {
-                "title": "Service",
-                "value": "${{ vars.ECS_SERVICE }}",
-                "short": true
+                "color": "${{ steps.status.outputs.color }}",
+                "title": "ECS Deployment ${{ steps.status.outputs.status }}",
+                "title_link": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                "fields": [
+                  {
+                    "title": "Repository",
+                    "value": "${{ github.repository }}",
+                    "short": true
+                  },
+                  {
+                    "title": "Branch",
+                    "value": "${{ github.ref_name }}",
+                    "short": true
+                  },
+                  {
+                    "title": "Commit",
+                    "value": "<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>",
+                    "short": true
+                  },
+                  {
+                    "title": "Triggered by",
+                    "value": "${{ github.actor }}",
+                    "short": true
+                  },
+                  {
+                    "title": "Build Status",
+                    "value": "${{ needs.build.result == 'success' && '✅' || '❌' }} ${{ needs.build.result }}",
+                    "short": true
+                  },
+                  {
+                    "title": "Security Scan",
+                    "value": "${{ needs.security.result == 'success' && '✅' || '❌' }} ${{ needs.security.result }}",
+                    "short": true
+                  },
+                  {
+                    "title": "Deployment",
+                    "value": "${{ needs.deploy.result == 'success' && '✅' || '❌' }} ${{ needs.deploy.result }}",
+                    "short": true
+                  },
+                  {
+                    "title": "ECS Service",
+                    "value": "${{ vars.ECS_SERVICE }}",
+                    "short": true
+                  },
+                  {
+                    "title": "ECS Cluster",
+                    "value": "${{ vars.ECS_CLUSTER }}",
+                    "short": true
+                  },
+                  {
+                    "title": "AWS Region",
+                    "value": "${{ vars.AWS_REGION || 'us-east-2' }}",
+                    "short": true
+                  },
+                  {
+                    "title": "Docker Image",
+                    "value": "${{ needs.build.outputs.image-uri }}",
+                    "short": false
+                  }
+                ],
+                "footer": "GitHub Actions",
+                "footer_icon": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+                "ts": ${{ github.event.head_commit.timestamp && 'github.event.head_commit.timestamp' || 'github.run_id' }}
               }
             ]
           }
