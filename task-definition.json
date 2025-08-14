@@ -1,86 +1,86 @@
-{
-    "taskDefinitionArn": "arn:aws:ecs:us-east-2:897729115822:task-definition/ghcr-task-definition:1",
-    "containerDefinitions": [
-        {
-            "name": "ghcr-container",
-            "image": "897729115822.dkr.ecr.us-east-2.amazonaws.com/ghcr-repo:latest",
-            "cpu": 0,
-            "portMappings": [
-                {
-                    "name": "ghcr-container-80-tcp",
-                    "containerPort": 80,
-                    "hostPort": 80,
-                    "protocol": "tcp",
-                    "appProtocol": "http"
-                }
-            ],
-            "essential": true,
-            "environment": [],
-            "environmentFiles": [],
-            "mountPoints": [],
-            "volumesFrom": [],
-            "ulimits": [],
-            "logConfiguration": {
-                "logDriver": "awslogs",
-                "options": {
-                    "awslogs-group": "/ecs/ghcr-task-definition",
-                    "awslogs-create-group": "true",
-                    "awslogs-region": "us-east-2",
-                    "awslogs-stream-prefix": "ecs"
-                },
-                "secretOptions": []
-            },
-            "systemControls": []
-        }
-    ],
-    "family": "ghcr-task-definition",
-    "executionRoleArn": "arn:aws:iam::897729115822:role/ecsTaskExecutionRole",
-    "networkMode": "awsvpc",
-    "revision": 1,
-    "volumes": [],
-    "status": "ACTIVE",
-    "requiresAttributes": [
-        {
-            "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
-        },
-        {
-            "name": "ecs.capability.execution-role-awslogs"
-        },
-        {
-            "name": "com.amazonaws.ecs.capability.ecr-auth"
-        },
-        {
-            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
-        },
-        {
-            "name": "ecs.capability.execution-role-ecr-pull"
-        },
-        {
-            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
-        },
-        {
-            "name": "ecs.capability.task-eni"
-        },
-        {
-            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
-        }
-    ],
-    "placementConstraints": [],
-    "compatibilities": [
-        "EC2",
-        "FARGATE"
-    ],
-    "requiresCompatibilities": [
-        "FARGATE"
-    ],
-    "cpu": "1024",
-    "memory": "3072",
-    "runtimePlatform": {
-        "cpuArchitecture": "X86_64",
-        "operatingSystemFamily": "LINUX"
-    },
-    "registeredAt": "2025-08-12T13:58:27.307Z",
-    "registeredBy": "arn:aws:iam::897729115822:user/wendy",
-    "enableFaultInjection": false,
-    "tags": []
-}
+// {
+//     "taskDefinitionArn": "arn:aws:ecs:us-east-2:897729115822:task-definition/ghcr-task-definition:1",
+//     "containerDefinitions": [
+//         {
+//             "name": "ghcr-container",
+//             "image": "897729115822.dkr.ecr.us-east-2.amazonaws.com/ghcr-repo:latest",
+//             "cpu": 0,
+//             "portMappings": [
+//                 {
+//                     "name": "ghcr-container-80-tcp",
+//                     "containerPort": 80,
+//                     "hostPort": 80,
+//                     "protocol": "tcp",
+//                     "appProtocol": "http"
+//                 }
+//             ],
+//             "essential": true,
+//             "environment": [],
+//             "environmentFiles": [],
+//             "mountPoints": [],
+//             "volumesFrom": [],
+//             "ulimits": [],
+//             "logConfiguration": {
+//                 "logDriver": "awslogs",
+//                 "options": {
+//                     "awslogs-group": "/ecs/ghcr-task-definition",
+//                     "awslogs-create-group": "true",
+//                     "awslogs-region": "us-east-2",
+//                     "awslogs-stream-prefix": "ecs"
+//                 },
+//                 "secretOptions": []
+//             },
+//             "systemControls": []
+//         }
+//     ],
+//     "family": "ghcr-task-definition",
+//     "executionRoleArn": "arn:aws:iam::897729115822:role/ecsTaskExecutionRole",
+//     "networkMode": "awsvpc",
+//     "revision": 1,
+//     "volumes": [],
+//     "status": "ACTIVE",
+//     "requiresAttributes": [
+//         {
+//             "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+//         },
+//         {
+//             "name": "ecs.capability.execution-role-awslogs"
+//         },
+//         {
+//             "name": "com.amazonaws.ecs.capability.ecr-auth"
+//         },
+//         {
+//             "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+//         },
+//         {
+//             "name": "ecs.capability.execution-role-ecr-pull"
+//         },
+//         {
+//             "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+//         },
+//         {
+//             "name": "ecs.capability.task-eni"
+//         },
+//         {
+//             "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
+//         }
+//     ],
+//     "placementConstraints": [],
+//     "compatibilities": [
+//         "EC2",
+//         "FARGATE"
+//     ],
+//     "requiresCompatibilities": [
+//         "FARGATE"
+//     ],
+//     "cpu": "1024",
+//     "memory": "3072",
+//     "runtimePlatform": {
+//         "cpuArchitecture": "X86_64",
+//         "operatingSystemFamily": "LINUX"
+//     },
+//     "registeredAt": "2025-08-12T13:58:27.307Z",
+//     "registeredBy": "arn:aws:iam::897729115822:user/wendy",
+//     "enableFaultInjection": false,
+//     "tags": []
+// }
