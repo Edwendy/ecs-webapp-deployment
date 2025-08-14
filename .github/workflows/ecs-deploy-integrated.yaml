@@ -222,7 +222,7 @@ jobs:
                 ],
                 "footer": "GitHub Actions",
                 "footer_icon": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
-                "ts": ${{ github.event.head_commit.timestamp && 'github.event.head_commit.timestamp' || 'github.run_id' }}
+                "ts": ${{ github.event.head_commit.timestamp || github.run_id }}
               }
             ]
           }
