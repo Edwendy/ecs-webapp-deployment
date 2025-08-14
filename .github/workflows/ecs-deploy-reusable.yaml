@@ -27,6 +27,8 @@ on:
         required: true
       AWS_SECRET_ACCESS_KEY:
         required: true
+      SLACK_WEBHOOK_URL:
+       required: true
 
 jobs:
   build:
@@ -139,4 +141,26 @@ jobs:
         service: ${{ inputs.ecs-service }}
         cluster: ${{ inputs.ecs-cluster }}
         wait-for-service-stability: true
-        
+
+  notify:
+    needs: [build, security, deploy]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Slack Notification
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#deployments'
+        text: |
+          ECS Deployment ${{ job.status }}
+          Repository: ${{ github.repository }}
+          Branch: ${{ github.ref_name }}
+          Commit: ${{ github.sha }}
+          Image: ${{ needs.build.outputs.image-uri }}
+          Service: ${{ inputs.ecs-service }}
+          Cluster: ${{ inputs.ecs-cluster }}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      if: env.SLACK_WEBHOOK_URL != ''
