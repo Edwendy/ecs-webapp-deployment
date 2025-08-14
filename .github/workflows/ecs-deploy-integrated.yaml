@@ -1,34 +1,13 @@
-name: Reusable ECS Deployment Workflow
+name: Build and Deploy to ECS
 
 on:
-  workflow_call:
-    inputs:
-      aws-region:
-        required: true
-        type: string
-      ecr-repository-uri:
-        required: true
-        type: string
-      container-name:
-        required: true
-        type: string
-      ecs-service:
-        required: true
-        type: string
-      ecs-cluster:
-        required: true
-        type: string
-      task-definition-path:
-        required: false
-        type: string
-        default: './task-definition.json'
-    secrets:
-      AWS_ACCESS_KEY_ID:
-        required: true
-      AWS_SECRET_ACCESS_KEY:
-        required: true
-      SLACK_WEBHOOK_URL:
-        required: false
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
+  workflow_dispatch:
 
 jobs:
   build:
@@ -45,7 +24,7 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ inputs.aws-region }}
+        aws-region: ${{ vars.AWS_REGION || 'us-east-2' }}
 
     - name: Log in to Amazon ECR
       uses: aws-actions/amazon-ecr-login@v2
@@ -53,7 +32,7 @@ jobs:
     - name: Build and Push Docker image
       id: build-image
       run: |
-        IMAGE_URI=${{ inputs.ecr-repository-uri }}:${{ github.sha }}
+        IMAGE_URI=${{ vars.ECR_REPOSITORY_URI }}:${{ github.sha }}
         docker build -t $IMAGE_URI .
         docker push $IMAGE_URI
         echo "image-uri=$IMAGE_URI" >> $GITHUB_OUTPUT
@@ -90,7 +69,7 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ inputs.aws-region }}
+        aws-region: ${{ vars.AWS_REGION || 'us-east-2' }}
 
     - name: Log in to Amazon ECR
       uses: aws-actions/amazon-ecr-login@v2
@@ -124,22 +103,22 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ inputs.aws-region }}
+        aws-region: ${{ vars.AWS_REGION || 'us-east-2' }}
 
     - name: Fill in the new image ID in the Amazon ECS task definition
       id: task-def
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
-        task-definition: ${{ inputs.task-definition-path }}
-        container-name: ${{ inputs.container-name }}
+        task-definition: ./task-definition.json
+        container-name: ${{ vars.CONTAINER_NAME }}
         image: ${{ needs.build.outputs.image-uri }}
 
     - name: Deploy Amazon ECS task definition
       uses: aws-actions/amazon-ecs-deploy-task-definition@v2
       with:
         task-definition: ${{ steps.task-def.outputs.task-definition }}
-        service: ${{ inputs.ecs-service }}
-        cluster: ${{ inputs.ecs-cluster }}
+        service: ${{ vars.ECS_SERVICE }}
+        cluster: ${{ vars.ECS_CLUSTER }}
         wait-for-service-stability: true
 
   notify:
@@ -167,8 +146,8 @@ jobs:
           Branch: ${{ github.ref_name }}
           Commit: ${{ github.sha }}
           Image: ${{ needs.build.outputs.image-uri }}
-          Service: ${{ inputs.ecs-service }}
-          Cluster: ${{ inputs.ecs-cluster }}
+          Service: ${{ vars.ECS_SERVICE }}
+          Cluster: ${{ vars.ECS_CLUSTER }}
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      if: secrets.SLACK_WEBHOOK_URL
+      if: env.SLACK_WEBHOOK_URL != ''
