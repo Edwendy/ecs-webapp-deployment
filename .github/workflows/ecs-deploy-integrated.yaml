@@ -135,20 +135,48 @@ jobs:
           echo "Slack webhook URL is not set"
         fi
         
+    - name: Set deployment status
+      id: status
+      run: |
+        if [[ "${{ needs.build.result }}" == "success" && "${{ needs.security.result }}" == "success" && "${{ needs.deploy.result }}" == "success" ]]; then
+          echo "status=SUCCESS" >> $GITHUB_OUTPUT
+        else
+          echo "status=FAILURE" >> $GITHUB_OUTPUT
+        fi
+        
     - name: Slack Notification
       uses: 8398a7/action-slack@v3
       with:
-        status: ${{ job.status }}
-        channel: '#deployments'
-        text: |
-          ECS Deployment ${{ job.status }}
-          Repository: ${{ github.repository }}
-          Branch: ${{ github.ref_name }}
-          Commit: ${{ github.sha }}
-          Image: ${{ needs.build.outputs.image-uri }}
-          Service: ${{ vars.ECS_SERVICE }}
-          Cluster: ${{ vars.ECS_CLUSTER }}
+        status: custom
+        custom_payload: |
+          {
+            "channel": "#deployments",
+            "text": "ECS Deployment ${{ steps.status.outputs.status }}",
+            "color": "${{ steps.status.outputs.status == 'SUCCESS' && 'good' || 'danger' }}",
+            "fields": [
+              {
+                "title": "Repository",
+                "value": "${{ github.repository }}",
+                "short": true
+              },
+              {
+                "title": "Branch",
+                "value": "${{ github.ref_name }}",
+                "short": true
+              },
+              {
+                "title": "Status",
+                "value": "${{ steps.status.outputs.status }}",
+                "short": true
+              },
+              {
+                "title": "Service",
+                "value": "${{ vars.ECS_SERVICE }}",
+                "short": true
+              }
+            ]
+          }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       if: env.SLACK_WEBHOOK_URL != ''
-      #
+      
